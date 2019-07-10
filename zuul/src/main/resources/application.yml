@@ -1,0 +1,69 @@
+server:
+  port: 8090
+spring:
+  application:
+    name: zuul
+  redis:
+    host: localhost
+    password:
+# 配置Eureka的地址
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+# 构建路由地址
+zuul:
+  routes:
+    # 这里可以自定义
+    zuul:
+      # 匹配的路由规则
+      path: /zuul/**
+      # 路由的目标服务名
+      serviceId: zuul
+      # 不通过路由demo2开头的任意请求,返回-Unauthorized
+      # 将指定路由的敏感头设置为空
+#     sensitiveHeaders:
+    ignored-patterns: /demo2/**
+    zuul-service:
+      path: /api/**
+      serviceId: forward:/test/
+  # 通过设置全局参数为空来覆盖默认值，
+  # 允许敏感头，设置为空就行了
+  sensitive-headers:
+
+# 手动添加路由前缀
+# prefix: /api
+# 默认为true，关闭该移除代理前缀的动作
+# strip-prefix: false
+
+# 关闭Eureka 负载路由
+#ribbon:
+#  eureka:
+#    enabled: false
+#   ReadTimeout: 读超时时间（单位毫秒）
+#   socketTimeOut: 连接超时时间（单位毫秒）
+  # 如果不使用eureka 的话，需要自己定义路由的那个服务的其他负载服务
+
+# 配置限流
+  ratelimit:
+    enabled: true
+    # 对应存储类型（用来统计存储统计信息）
+    repository: redis
+    # 配置路由的策略
+    policy-list:
+      zuul:
+        # 每秒允许多少个请求
+        - limit: 2
+          # 刷新数据（单位秒）
+          refresh-interval: 1
+          # 根据什么统计
+          type:
+            - url
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 1000
